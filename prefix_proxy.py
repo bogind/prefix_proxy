@@ -25,6 +25,8 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from PyQt5.QtWidgets import QTableWidgetItem
+from PyQt5.QtCore import QRegExp
+from PyQt5.QtGui import QRegExpValidator
 
 # Initialize Qt resources from file resources.py
 from .resources import *  # noqa: F403
@@ -67,6 +69,9 @@ class PrefixProxy:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+
+        # Add Empty Handlers List
+        self.handlers = []
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -180,6 +185,16 @@ class PrefixProxy:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    
+    def buildHandlersList(self):
+        rowCount = self.dlg.handlersTable.rowCount()
+        self.handlers = []
+        for i in range(rowCount):
+            url = self.dlg.handlersTable.item(i,0).text()
+            proxyUrl = self.dlg.handlersTable.item(i,1).text()
+            self.handlers.append({"url":url,"proxy":proxyUrl})
+        return handlers
+
 
     def addHandler(self):
         url = self.dlg.uRLLineEdit.text()
@@ -218,6 +233,11 @@ class PrefixProxy:
         self.dlg.handlersTable.itemSelectionChanged.connect(self.toggleRemoveButtonVisibility)
         self.dlg.clearSelectionButton.clicked.connect(self.clearSelection)
 
+    def setValidators(self):
+        urlValidator = QRegExpValidator(QRegExp("^(http|https)://.*$"))
+        self.dlg.uRLLineEdit.setValidator(urlValidator)
+        self.dlg.proxyURLLineEdit.setValidator(urlValidator)
+
 
     def run(self):
         """Run method that performs all the real work"""
@@ -229,6 +249,7 @@ class PrefixProxy:
             self.first_start = False
             self.dlg = PrefixProxyDialog()
             self.bindActions()
+            self.setValidators()
 
         # show the dialog
         self.dlg.show()
@@ -238,4 +259,5 @@ class PrefixProxy:
         if result:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
+            handlers = self.buildHandlersList()
             pass
