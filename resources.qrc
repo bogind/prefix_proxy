@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/prefix_proxy" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
