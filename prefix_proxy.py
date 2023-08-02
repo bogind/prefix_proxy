@@ -24,9 +24,10 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from PyQt5.QtWidgets import QTableWidgetItem
 
 # Initialize Qt resources from file resources.py
-from .resources import *
+from .resources import *  # noqa: F403
 # Import the code for the dialog
 from .prefix_proxy_dialog import PrefixProxyDialog
 import os.path
@@ -180,14 +181,54 @@ class PrefixProxy:
             self.iface.removeToolBarIcon(action)
 
 
+    def addHandler(self):
+        url = self.dlg.uRLLineEdit.text()
+        proxyUrl = self.dlg.proxyURLLineEdit.text()
+        rowCount = self.dlg.handlersTable.rowCount()
+        self.dlg.handlersTable.insertRow(rowCount)
+        self.dlg.handlersTable.setItem(rowCount,0,QTableWidgetItem(url))
+        self.dlg.handlersTable.setItem(rowCount,1,QTableWidgetItem(proxyUrl))
+        self.dlg.uRLLineEdit.clear()
+        self.dlg.proxyURLLineEdit.clear()
+
+    def removeHandler(self):
+        index_list = []
+        for model_index in self.dlg.handlersTable.selectionModel().selectedRows():
+            index = QtCore.QPersistentModelIndex(model_index)
+            index_list.append(index)
+        for index in index_list:
+            self.dlg.handlersTable.removeRow(index.row())
+
+    def toggleRemoveButtonVisibility(self):
+        if self.dlg.handlersTable.rowCount() > 0:
+            self.dlg.removeHandlerButton.setEnabled(True)
+            self.dlg.clearSelectionButton.setEnabled(True)
+        else:
+            self.dlg.removeHandlerButton.setEnabled(False)
+            self.dlg.clearSelectionButton.setEnabled(False)
+
+    def clearSelection(self):
+        for item in self.dlg.handlersTable.selectedItems():
+            item.setSelected(False)
+
+
+    def bindActions(self):
+        self.dlg.addHandlerButton.clicked.connect(self.addHandler)
+        self.dlg.removeHandlerButton.clicked.connect(self.removeHandler)
+        self.dlg.handlersTable.itemSelectionChanged.connect(self.toggleRemoveButtonVisibility)
+        self.dlg.clearSelectionButton.clicked.connect(self.clearSelection)
+
+
     def run(self):
         """Run method that performs all the real work"""
 
         # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
+        # Only create GUI ONCE in callback, 
+        # so that it will only load when the plugin is started
+        if self.first_start is True:
             self.first_start = False
             self.dlg = PrefixProxyDialog()
+            self.bindActions()
 
         # show the dialog
         self.dlg.show()
