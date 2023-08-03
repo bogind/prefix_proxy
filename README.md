@@ -13,3 +13,15 @@ Without the second question mark, adding these types of layers is impossible,
 It's also really annoying trying to get their data,
 The script adds a simple prefix proxy to all requests which start in the handler's URL.
 
+
+Until this gets approval in the plugin repository, 
+you can install using the `Plugins`->`Manage and install plugins`->`Install from ZIP` dialog
+
+### How to use after installation?
+
+1.  Add whatever handlers you want to use to the table with the `URL` and `Proxy URL` (don't forget to click on <kbd>Add handler</kbd>)
+![image](https://github.com/bogind/prefix_proxy/assets/26594971/10e87a21-07fa-4898-b030-a091b1ebd877)
+Don't add a question mark at the end of the `Proxy URL`
+2. Click OK
+3. Add the layer with only the URL as a connection, if a referer is needed, add that as well.
+4. The layer should load now, if not, try refreshing the connection
