@@ -24,8 +24,9 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from qgis.core import QgsNetworkAccessManager, QgsNetworkRequestParameters
 from PyQt5.QtWidgets import QTableWidgetItem
-from PyQt5.QtCore import QRegExp
+from PyQt5.QtCore import QRegExp, QUrl
 from PyQt5.QtGui import QRegExpValidator
 
 # Initialize Qt resources from file resources.py
@@ -33,6 +34,7 @@ from .resources import *  # noqa: F403
 # Import the code for the dialog
 from .prefix_proxy_dialog import PrefixProxyDialog
 import os.path
+import json
 
 
 class PrefixProxy:
@@ -72,6 +74,11 @@ class PrefixProxy:
 
         # Add Empty Handlers List
         self.handlers = []
+
+        # Add QgsNetworkAccessManager and process ID
+        self.nam = QgsNetworkAccessManager.instance()
+        self.processID = None
+
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -185,7 +192,53 @@ class PrefixProxy:
                 action)
             self.iface.removeToolBarIcon(action)
 
-    
+
+    def setPreprocessor(self):    
+        if self.processID is not None:
+            self.nam.removeRequestPreprocessor(self.processID)
+        self.processID = self.nam.setRequestPreprocessor(self.addPrefixProxyToRequest)
+        print(self.processID)
+
+
+    def addPrefixProxyToRequest(self,request):
+        """
+        uses the requestAboutToBeSent signal to add the prefix proxy to the request
+        """
+        url = request.url().toString()
+        for handler in self.handlers:
+                if url.startswith(handler["url"]):
+                    prefixedURL = handler["proxy"] + "?" + url
+                    print(prefixedURL)
+                    request.setUrl(QUrl(prefixedURL))
+
+
+    def writeHandlers(self):
+        handlers = self.handlers
+        with open(self.plugin_dir + "/handlers.json", 'w') as outfile:
+            json.dump(handlers, outfile)
+
+    def readHandlers(self):
+        """
+        reads the handlers from the handlers.json file
+        if one exists
+        """
+        if os.path.exists(self.plugin_dir + "/handlers.json"):
+            with open(self.plugin_dir + "/handlers.json") as json_file:
+                self.handlers = json.load(json_file)
+                self.populateHandlersTable()
+
+
+    def populateHandlersTable(self):
+        rowCount = len(self.handlers)
+        self.dlg.handlersTable.clearContents()
+        self.dlg.handlersTable.setRowCount(rowCount)
+        for i in range(rowCount):
+            url = self.handlers[i]["url"]
+            proxyUrl = self.handlers[i]["proxy"]
+            self.dlg.handlersTable.setItem(i,0,QTableWidgetItem(url))
+            self.dlg.handlersTable.setItem(i,1,QTableWidgetItem(proxyUrl))
+
+
     def buildHandlersList(self):
         rowCount = self.dlg.handlersTable.rowCount()
         self.handlers = []
@@ -193,7 +246,9 @@ class PrefixProxy:
             url = self.dlg.handlersTable.item(i,0).text()
             proxyUrl = self.dlg.handlersTable.item(i,1).text()
             self.handlers.append({"url":url,"proxy":proxyUrl})
-        return handlers
+
+        self.writeHandlers()
+        return self.handlers
 
 
     def addHandler(self):
@@ -205,6 +260,7 @@ class PrefixProxy:
         self.dlg.handlersTable.setItem(rowCount,1,QTableWidgetItem(proxyUrl))
         self.dlg.uRLLineEdit.clear()
         self.dlg.proxyURLLineEdit.clear()
+        self.buildHandlersList()
 
     def removeHandler(self):
         index_list = []
@@ -240,16 +296,12 @@ class PrefixProxy:
 
 
     def run(self):
-        """Run method that performs all the real work"""
-
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, 
-        # so that it will only load when the plugin is started
         if self.first_start is True:
             self.first_start = False
             self.dlg = PrefixProxyDialog()
             self.bindActions()
             self.setValidators()
+            self.readHandlers()
 
         # show the dialog
         self.dlg.show()
@@ -257,7 +309,8 @@ class PrefixProxy:
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
-            handlers = self.buildHandlersList()
+            # prebuild handlers list when OK is pressed
+            self.buildHandlersList()
+            # set the preprocessor
+            self.setPreprocessor()
             pass
