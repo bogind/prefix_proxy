@@ -17,7 +17,12 @@ The script adds a simple prefix proxy to all requests which start in the handler
 Until this gets approval in the plugin repository, 
 you can install using the `Plugins`->`Manage and install plugins`->`Install from ZIP` dialog
 
-### How to use after installation?
+### How to use the plugin after installation?
+
+You can find the plugin under the `Web` tab or the `Plugins` toolbar
+
+![Alt text](plugin_location.png)
+
 
 1.  Add whatever handlers you want to use to the table with the `URL` and `Proxy URL` (don't forget to click on <kbd>Add handler</kbd>)
 ![image](https://github.com/bogind/prefix_proxy/assets/26594971/10e87a21-07fa-4898-b030-a091b1ebd877)
