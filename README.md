@@ -14,8 +14,7 @@ It's also really annoying trying to get their data,
 The script adds a simple prefix proxy to all requests which start in the handler's URL.
 
 
-Until this gets approval in the plugin repository, 
-you can install using the `Plugins`->`Manage and install plugins`->`Install from ZIP` dialog
+The plugin can be installed throught the plugin manager, you can find the latest published version at the [QGIS Plugin Repository](https://plugins.qgis.org/plugins/prefix_proxy/)
 
 ### How to use the plugin after installation?
 
