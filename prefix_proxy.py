@@ -79,6 +79,11 @@ class PrefixProxy:
         self.nam = QgsNetworkAccessManager.instance()
         self.processID = None
 
+        self.readHandlers()
+        
+        # set the preprocessor
+        self.setPreprocessor()
+
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -181,7 +186,13 @@ class PrefixProxy:
             parent=self.iface.mainWindow())
 
         # will be set False in run()
-        self.first_start = True
+        self.dlg = PrefixProxyDialog()
+        self.bindActions()
+        self.setValidators()
+        self.populateHandlersTable()
+        # prebuild handlers list when OK is pressed
+        self.buildHandlersList()
+        
 
 
     def unload(self):
@@ -194,6 +205,9 @@ class PrefixProxy:
 
 
     def setPreprocessor(self):    
+        """
+        Sets self.addPrefixProxyToRequest to run before every request is run 
+        """
         if self.processID is not None:
             self.nam.removeRequestPreprocessor(self.processID)
         self.processID = self.nam.setRequestPreprocessor(self.addPrefixProxyToRequest)
@@ -213,6 +227,9 @@ class PrefixProxy:
 
 
     def writeHandlers(self):
+        """
+        writes currently defined handlers to the handlers.json file in the profile's plugin folder
+        """
         handlers = self.handlers
         with open(self.plugin_dir + "/handlers.json", 'w') as outfile:
             json.dump(handlers, outfile)
@@ -225,10 +242,12 @@ class PrefixProxy:
         if os.path.exists(self.plugin_dir + "/handlers.json"):
             with open(self.plugin_dir + "/handlers.json") as json_file:
                 self.handlers = json.load(json_file)
-                self.populateHandlersTable()
 
 
     def populateHandlersTable(self):
+        """
+        Update the table to display handlers
+        """
         rowCount = len(self.handlers)
         self.dlg.handlersTable.clearContents()
         self.dlg.handlersTable.setRowCount(rowCount)
@@ -240,6 +259,9 @@ class PrefixProxy:
 
 
     def buildHandlersList(self):
+        """
+        Build object and write to handlers.json
+        """
         rowCount = self.dlg.handlersTable.rowCount()
         self.handlers = []
         for i in range(rowCount):
@@ -252,6 +274,9 @@ class PrefixProxy:
 
 
     def addHandler(self):
+        """
+        Add new rule to handlers list
+        """
         url = self.dlg.uRLLineEdit.text()
         proxyUrl = self.dlg.proxyURLLineEdit.text()
         rowCount = self.dlg.handlersTable.rowCount()
@@ -263,6 +288,9 @@ class PrefixProxy:
         self.buildHandlersList()
 
     def removeHandler(self):
+        """
+        Remov rule from list
+        """
         index_list = []
         for model_index in self.dlg.handlersTable.selectionModel().selectedRows():
             index = QtCore.QPersistentModelIndex(model_index)
@@ -296,12 +324,6 @@ class PrefixProxy:
 
 
     def run(self):
-        if self.first_start is True:
-            self.first_start = False
-            self.dlg = PrefixProxyDialog()
-            self.bindActions()
-            self.setValidators()
-            self.readHandlers()
 
         # show the dialog
         self.dlg.show()

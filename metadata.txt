@@ -6,7 +6,7 @@
 name=Proxy Handler
 qgisMinimumVersion=3.22
 description=Adds prefix proxy addresses to connections
-version=0.1
+version=0.2
 author=Dror Bogin
 email=dror.bogin@gmail.com
 
@@ -20,7 +20,9 @@ repository=https://github.com/bogind/prefix_proxy
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=
+ 2023-10-14 Version 0.2
+ handlers now reload in plugin start
 
 # Tags are comma separated with spaces allowed
 tags=python,proxy
